@@ -1,0 +1,7 @@
+---
+
+monitor_interface: "ib0"
+radosgw_interface: "ib0"
+public_network: 192.168.18.0/24
+cluster_network: "{{ public_network }}"
+

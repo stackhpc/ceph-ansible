@@ -13,7 +13,8 @@ login2
 [julia_viz]
 viz-0001
 viz-0002
-viz-0003
+# viz-0003 appears to have no link on ib0
+#viz-0003
 viz-0004
 
 [julia_knl]

@@ -1,0 +1,8 @@
+---
+julia_fs_name: "cephfs"
+julia_fs_mountpoint: "/ceph"
+julia_fs_client: "julia"
+
+# Metadata server to communicate with to mount CephFS
+julia_mds: "{{ groups['mdss'][0] }}:6789"
+

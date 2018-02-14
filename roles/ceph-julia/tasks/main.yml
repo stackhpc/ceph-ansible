@@ -1,0 +1,45 @@
+---
+# Cray / Julia / HBP Ceph client cluster configuration
+- name: Ensure client mount points exist
+  file: 
+    path: "{{ cephfs_mount.path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  become: True
+
+- name: Extract secret
+  command: "ceph-authtool --print-key /etc/ceph/ceph.client.{{cephfs_mount.key}}.keyring -n client.{{cephfs_mount.key}}"
+  become: True
+  register: cephfs_mount_secret
+
+- name: Write secret file
+  lineinfile:
+    path: "/etc/ceph/ceph.client.{{cephfs_mount.key}}.secret"
+    state: present
+    create: yes
+    owner: root
+    group: root
+    mode: 0600
+    regexp: ".*"
+    line: "{{cephfs_mount_secret.stdout}}"
+  become: True
+
+- name: What is the monitor interface
+  set_fact:
+    monitor_dev: "{{ hostvars[groups['mons'] | first]['monitor_interface'] }}"
+
+- name: Extract a monitor IP
+  set_fact:
+    monitor_ip: "{{ hostvars[groups['mons'] | first]['ansible_' ~ monitor_dev]['ipv4']['address'] }}"
+
+- name: Perform CephFS client mount
+  mount:
+    path: "{{ cephfs_mount.path }}"
+    src: "{{ monitor_ip }}:/"
+    fstype: ceph
+    state: mounted
+    opts: "_netdev,noatime,name={{cephfs_mount.key}},secretfile=/etc/ceph/ceph.client.{{cephfs_mount.key}}.secret"
+    boot: yes
+  become: True

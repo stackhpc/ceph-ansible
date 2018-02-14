@@ -1,0 +1,66 @@
+---
+#
+# Apply IPoIB configuration for all nodes in the cluster
+#
+- hosts: all
+
+  tasks:
+
+  - name: Update ib0 interface config for connected mode
+    lineinfile:
+      path: /etc/sysconfig/network-scripts/ifcfg-ib0
+      regexp: "^CONNECTED_MODE="
+      line: "CONNECTED_MODE=yes"
+    notify: Restart ib0
+
+  - name: Update ib0 interface config for MTU
+    lineinfile:
+      path: /etc/sysconfig/network-scripts/ifcfg-ib0
+      regexp: "^MTU="
+      line: "MTU=65520"
+    notify: Restart ib0
+
+  handlers:
+
+  - name: Restart ib0
+    block:
+    - command: "ifdown ib0"
+    - command: "ifup ib0"
+
+#
+# Apply network configuration specific to the OSD servers
+#
+- hosts: julia_data
+
+  tasks:
+
+  - name: Apply sysctl for TCP
+    lineinfile:
+      path: /etc/sysctl.conf
+      regexp: "^{{item.key}}="
+      line: "{{item.key}}={{item.val}}"
+    with_items:
+    # NOTE: this setting has trouble applying, even with these reduced settings
+    - key: 'net.ipv4.tcp_rmem'
+      val: '"8192 174760 8388608"'
+#     val: '"16384 349520 16777216"'
+    # NOTE: this setting has trouble applying, even with these reduced settings
+    - key: "net.ipv4.tcp_wmem"
+      val: '"8192 174760 8388608"'
+#     val: '"16384 349520 16777216"'
+    - key: "net.core.rmem_max"
+      val: "16777216"
+    - key: "net.core.wmem_max"
+      val: "16777216"
+    - key: "net.core.somaxconn"
+      val: "2048"
+    - key: "net.ipv4.tcp_mtu_probing"
+      val: "1"
+    - key: "net.core.netdev_max_backlog"
+      val: "250000"
+    notify: Update sysctl
+
+  handlers:
+
+  - name: Update sysctl
+    command: sysctl -p /etc/sysctl.conf

@@ -13,7 +13,8 @@ login2
 [julia_viz]
 viz-0001
 viz-0002
-viz-0003
+#vix-0003 appears to have no OPA link
+#viz-0003
 viz-0004
 
 [julia_knl]
